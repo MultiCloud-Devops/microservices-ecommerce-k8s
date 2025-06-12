@@ -4,7 +4,7 @@ pipeline {
     environment  {
         AWS_ACCOUNT_ID = credentials('ACCOUNT_ID')
         AWS_ECR_REPO_NAME = "productcatalogservice"
-        AWS_DEFAULT_REGION = 'ap-south-1'
+        AWS_DEFAULT_REGION = 'us-east-1'
         REPOSITORY_URI = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_DEFAULT_REGION}.amazonaws.com/"
     }
 
