@@ -51,7 +51,7 @@ pipeline {
                             git config user.name "MultiCloud-Devops"
                             BUILD_NUMBER=${BUILD_NUMBER}
                             echo $BUILD_NUMBER
-                            sed -i "$(awk '/image:/ {c++; if(c==2) print NR}' kuberenetes-manfest-file.yaml)s|image:.*|image: ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}|" kuberenetes-manfest-file.yaml
+                            sed -i "$(awk -v name="$AWS_ECR_REPO_NAME" '/name:/ {in_block=($2==name)} in_block && /image:/ {count++; if(count==2) print NR}' kuberenetes-manfest-file.yaml)s|image:.*|image: ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}|" kuberenetes-manfest-file.yaml
                             git add .
                             git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
                             git push https://${git_token}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
