@@ -45,19 +45,28 @@ pipeline {
                 GIT_USER_NAME = "MultiCloud-Devops"
             }
             steps {
-                    withCredentials([string(credentialsId: 'git_token', variable: 'git_token')]) {
-                        sh '''
-                            git config user.email "krishnaurs2022@gmail.com"
-                            git config user.name "MultiCloud-Devops"
-                            BUILD_NUMBER=${BUILD_NUMBER}
-                            echo $BUILD_NUMBER
-                            sed -i "$(awk -v name="$AWS_ECR_REPO_NAME" '/name:/ {in_block=($2==name)} in_block && /image:/ {count++; if(count==2) print NR}' kuberenetes-manfest-file.yaml)s|image:.*|image: ${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}|" kuberenetes-manfest-file.yaml
-                            git add .
-                            git commit -m "Update deployment Image to version \${BUILD_NUMBER}"
-                            git push https://${git_token}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-                        '''
-                    }
+                withCredentials([string(credentialsId: 'git_token', variable: 'git_token')]) {
+                    sh '''
+                        git config user.email "krishnaurs2022@gmail.com"
+                        git config user.name "MultiCloud-Devops"
+                        echo $BUILD_NUMBER
+
+                        awk -v name="$AWS_ECR_REPO_NAME" -v img="${REPOSITORY_URI}${AWS_ECR_REPO_NAME}:${BUILD_NUMBER}" '
+                            $0 ~ "name: "name { in_block=1; count=0; next }
+                            in_block && /image:/ {
+                                count++
+                                if (count == 2) sub(/image:.*/, "image: " img)
+                            }
+                            { print }
+                        ' kuberenetes-manfest-file.yaml > tmp.yaml && mv tmp.yaml kuberenetes-manfest-file.yaml
+
+                        git add .
+                        git commit -m "Update deployment Image to version ${BUILD_NUMBER}"
+                        git push https://${git_token}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
+                    '''
                 }
             }
+        }
+
     }
 }
